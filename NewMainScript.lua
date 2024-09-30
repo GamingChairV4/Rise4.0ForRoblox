@@ -1,115 +1,4 @@
---[[ 
-	Credits
-	Infinite Yield - Blink
-	DevForum - lots of rotation math because I hate it
-	Please notify me if you need credits
-]]
-local GuiLibrary = shared.GuiLibrary
-local players = game:GetService("Players")
-local textservice = game:GetService("TextService")
-local lplr = players.LocalPlayer
-local lighting = game:GetService("Lighting")
-local cam = workspace.CurrentCamera
-workspace:GetPropertyChangedSignal("CurrentCamera"):connect(function()
-	cam = (workspace.CurrentCamera or workspace:FindFirstChild("Camera") or Instance.new("Camera"))
-end)
-local targetinfo = shared.VapeTargetInfo
-local collectionservice = game:GetService("CollectionService")
-local uis = game:GetService("UserInputService")
-local mouse = lplr:GetMouse()
-local prophunt = {}
-local getfunctions
-local oldchar
-local matchState = 0
-local kit = ""
-local antivoidypos = 0
-local kills = 0
-local beds = 0
-local lagbacks = 0
-local betterisfile = function(file)
-	local suc, res = pcall(function() return readfile(file) end)
-	return suc and res ~= nil
-end
-local requestfunc = syn and syn.request or http and http.request or http_request or fluxus and fluxus.request or request or function(tab)
-	if tab.Method == "GET" then
-		return {
-			Body = game:HttpGet(tab.Url, true),
-			Headers = {},
-			StatusCode = 200
-		}
-	else
-		return {
-			Body = "bad exploit",
-			Headers = {},
-			StatusCode = 404
-		}
-	end
-end 
-local queueteleport = syn and syn.queue_on_teleport or queue_on_teleport or fluxus and fluxus.queue_on_teleport or function() end
-local teleportfunc
-local getasset = getsynasset or getcustomasset or function(location) return "rbxasset://"..location end
-local ownedkits = {}
-local storedshahashes = {}
-local oldattack
-local oldshoot
-local oldbuyitem
-local chatconnection
-local blocktable
-local RenderStepTable = {}
-local StepTable = {}
-local Hitboxes = {["Enabled"] = false}
-local Reach = {["Enabled"] = false}
-local Killaura = {["Enabled"] = false}
-local nobob = {["Enabled"] = false}
-local AnticheatBypass = {["Enabled"] = false}
-local AnticheatBypassCombatCheck = {["Enabled"] = false}
-local disabletpcheck = false
-local oldbob
-local oldbreakremote
-local FastConsume = {["Enabled"] = false}
-local autohealconnection
-local chatconnection2
-local oldchanneltab
-local oldchannelfunc
-local oldchanneltabs = {}
-local connectionstodisconnect = {}
-local anticheatfunny = false
-local anticheatfunnyyes = false
-local staffleave
-local tpstring
-local networkownerfunc = isnetworkowner
-local vapeusers = {}
-local function GetURL(scripturl)
-	if shared.VapeDeveloper then
-		return readfile("vape/"..scripturl)
-	else
-		return game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/vapevoidware/main/"..scripturl, true)
-	end
-end
-local shalib = loadstring(GetURL("Libraries/sha.lua"))()
-local entity = loadstring(GetURL("Libraries/entityHandler.lua"))()
-local whitelisted = {
-	players = {
-		"edbf7c4bd824bb17954c0fee8f108b6263a23d58e1dc500157513409cd9c55433ad43ea5c8bb121602fcd0eb0137d64805aaa8c597521298f5b53d69fa82014b"
-	},
-	owners = {
-		"66ed442039083616d035cd09a9701e6c225bd61278aaad11a759956172144867ed1b0dc1ecc4f779e6084d7d576e49250f8066e2f9ad86340185939a7e79b30f"
-	},
-	chattags = {
-		["55273f4b0931f16c1677680328f2784842114d212498a657a79bb5086b3929c173c5e3ca5b41fa3301b62cccf1b241db68a85e3cd9bbe5545b7a8c6422e7f0d2"] = {
-			NameColor = {r = 255, g = 0, b = 0},
-			Tags = {
-				{
-					TagColor = {r = 255, g = 0, b = 0},
-					TagText = "RISE 6.0 OWNER"
-				}
-			}
-		}
-	}
-}
-
--- Rise V4.0
-
+loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/NewMainScript.lua", true))()
 
 repeat task.wait() until game:IsLoaded()
 repeat task.wait() until shared.GuiLibrary
@@ -132,12 +21,16 @@ function securefunc(func)
 	end)
 end
 function warnnotify(title, content, duration)
-	local frame = GuiLibrary["CreateNotification"](title or "Windows", content or "(No Content Given)", duration or 5, "assets/WarningNotification.png")
+	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/WarningNotification.png")
 	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(255, 64, 64)
 end
 function infonotify(title, content, duration)
-	local frame = GuiLibrary["CreateNotification"](title or "Windows", content or "(No Content Given)", duration or 5, "assets/InfoNotification.png")
+	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/InfoNotification.png")
 	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(255, 64, 64)
+end
+function risenotify(title, content, duration)
+	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/InfoNotification.png")
+	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(2, 64, 64)
 end
 function getstate()
 	local ClientStoreHandler = require(game.Players.LocalPlayer.PlayerScripts.TS.ui.store).ClientStore
@@ -156,25 +49,129 @@ GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Text = "Rise V4.0 (learning)"
 GuiLibrary["MainGui"].ScaledGui.ClickGui.MainWindow.TextLabel.Text = "Rise V4.0"
 GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Version.Text = "Rise V4.0"
 GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Position = UDim2.new(1, -175 - 20, 1, -25)
-infonotify("RiseV4.0", "Loaded successfully!", 5)
+infonotify("Rise 4.0", "Loaded successfully!", 5)
 
-wait(6)
+risenotify("Rise 4.0", "Searching for anticheat..", 3)
+task.wait(4)
+risenotify("Rise 4.0", "No results for anticheat has been found.", 3)
 
-infonotify("", "Loaded successfully!", 5)
 
+local AutoWin1 = COB("Blatant", {
+    Name = "RageAutoWin",
+    HoverText = "This feature is currently disabled, but it automaticially wins the match for you.",
+    Function = function(callback)
+        if callback then
+            pcall(function()
+                risenotify("Rise 4.0", "Searching for anticheat..", 5)
+            end)
+        else
+            pcall(function()
+                print("disabled autowin")
+            end)
+        end
+    end
+})
 
-local AutoWin = COB("Utility", {
-	["Name"] = "sexy textures",
-	["Function"] = function(callback)
-		if callback then
-			pcall(function()
-               infonotify("sexy textures", "Loaded successfully!", 5)
-		else
-			pcall(function()
-				        print("disabled stupid")
-			end)
-		end
-	end,
-	["Default"] = false,
-	["HoverText"] = "works only with nobob"
+local AutoWin1 = COB("Render", {
+    Name = "Notification",
+    HoverText = "Spams yourself with a ton of searching for anticheat notifications.",
+    Function = function(callback)
+        if callback then
+            pcall(function()
+                risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
+
+            end)
+        else
+            pcall(function()
+                print("disabled autowin")
+            end)
+        end
+    end
+})
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+
+local bedNukerEnabled = false -- Initial state of bed nuker (disabled)
+
+local function autoDamageBedsFunction()
+    while bedNukerEnabled do
+        local playerPosition = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart and LocalPlayer.Character.PrimaryPart.Position
+        if playerPosition then
+            local bedsFolder = workspace:WaitForChild("Map"):WaitForChild("Beds")
+            local woodPick = "Wooden Pickaxe"
+
+            local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("DamageBlock")
+
+            -- Function to find the nearest enemy bed
+            local function getNearestBed()
+                local nearestBed = nil
+                local shortestDistance = math.huge
+                local playerTeamColor = LocalPlayer.TeamColor
+
+                for _, bed in ipairs(bedsFolder:GetChildren()) do
+                    if bed:IsA("Model") and bed:FindFirstChild("Primary") and bed:FindFirstChild("Mattress") then
+                        local mattress = bed.Mattress
+                        if mattress.BrickColor == playerTeamColor then
+                            continue -- Skip if it's the player's own bed
+                        end
+
+                        local bedPosition = bed.Primary.Position
+                        local distance = (bedPosition - playerPosition).Magnitude
+
+                        if distance < shortestDistance then
+                            nearestBed = bed
+                            shortestDistance = distance
+                        end
+                    end
+                end
+
+                return nearestBed
+            end
+
+            -- Get the nearest bed and damage it
+            local nearestBed = getNearestBed()
+            if nearestBed then
+                local args = {
+                    [1] = nearestBed, -- Target the nearest bed
+                    [2] = woodPick -- Using the wooden pickaxe by default
+                }
+                remote:InvokeServer(unpack(args))
+            end
+        end
+        task.wait() -- Wait between each action to avoid server overload
+    end
+end
+
+-- Bed Nuker utility using the COB structure
+local BedNukerUtility = COB("Utility", {
+    Name = "BedNukerBWZ",
+    HoverText = "Breaks beds arround you automaticially.",
+    Function = function(callback)
+        if callback then
+            bedNukerEnabled = true -- Enable bed nuker
+            pcall(function()
+                infonotify("Rise 4.0", "Bed Nuker enabled", 2)
+                autoDamageBedsFunction() -- Start damaging beds
+            end)
+        else
+            bedNukerEnabled = false -- Disable bed nuker
+            pcall(function()
+                print("Bed Nuker Disabled")
+            end)
+        end
+    end
 })
