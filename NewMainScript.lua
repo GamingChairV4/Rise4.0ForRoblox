@@ -1,177 +1,100 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/NewMainScript.lua", true))()
-
-repeat task.wait() until game:IsLoaded()
-repeat task.wait() until shared.GuiLibrary
-local uis = game:GetService("UserInputService")
-local GuiLibrary = shared.GuiLibrary
-local ScriptSettings = {}
-local UIS = game:GetService("UserInputService")
-local COB = function(tab, argstable) 
-	return GuiLibrary["ObjectsThatCanBeSaved"][tab.."Window"]["Api"].CreateOptionsButton(argstable)
+--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.
+if getgenv and not getgenv().shared then getgenv().shared = {} end
+local errorPopupShown = false
+local setidentity = syn and syn.set_thread_identity or set_thread_identity or setidentity or setthreadidentity or function() end
+local getidentity = syn and syn.get_thread_identity or get_thread_identity or getidentity or getthreadidentity or function() return 8 end
+local isfile = isfile or function(file)
+	local suc, res = pcall(function() return readfile(file) end)
+	return suc and res ~= nil
 end
-function securefunc(func)
-	task.spawn(function()
-		spawn(function()
-			pcall(function()
-				loadstring(
-					func()
-				)()
-			end)
+local delfile = delfile or function(file) writefile(file, "") end
+
+local function displayErrorPopup(text, func)
+	local oldidentity = getidentity()
+	setidentity(8)
+	local ErrorPrompt = getrenv().require(game:GetService("CoreGui").RobloxGui.Modules.ErrorPrompt)
+	local prompt = ErrorPrompt.new("Default")
+	prompt._hideErrorCode = true
+	local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+	prompt:setErrorTitle("Vape")
+	prompt:updateButtons({{
+		Text = "OK",
+		Callback = function() 
+			prompt:_close() 
+			if func then func() end
+		end,
+		Primary = true
+	}}, 'Default')
+	prompt:setParent(gui)
+	prompt:_open(text)
+	setidentity(oldidentity)
+end
+
+local function vapeGithubRequest(scripturl)
+	if not isfile("vape/"..scripturl) then
+		local suc, res
+		task.delay(15, function()
+			if not res and not errorPopupShown then 
+				errorPopupShown = true
+				displayErrorPopup("The connection to github is taking a while, Please be patient.")
+			end
 		end)
-	end)
-end
-function warnnotify(title, content, duration)
-	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/WarningNotification.png")
-	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(255, 64, 64)
-end
-function infonotify(title, content, duration)
-	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/InfoNotification.png")
-	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(255, 64, 64)
-end
-function risenotify(title, content, duration)
-	local frame = GuiLibrary["CreateNotification"](title or "Rise 4.0", content or "(No Content Given)", duration or 5, "assets/InfoNotification.png")
-	frame.Frame.Frame.ImageColor3 = Color3.fromRGB(2, 64, 64)
-end
-function getstate()
-	local ClientStoreHandler = require(game.Players.LocalPlayer.PlayerScripts.TS.ui.store).ClientStore
-	return ClientStoreHandler:getState().Game.matchState
-end
-function iscustommatch()
-	local ClientStoreHandler = require(game.Players.LocalPlayer.PlayerScripts.TS.ui.store).ClientStore
-	return ClientStoreHandler:getState().Game.customMatch
-end
-function checklagback()
-	local hrp = game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
-	return isnetworkowner(hrp)
+		suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/"..readfile("vape/commithash.txt").."/"..scripturl, true) end)
+		if not suc or res == "404: Not Found" then
+			if identifyexecutor and ({identifyexecutor()})[1] == 'Wave' then 
+				displayErrorPopup('Stop using detected garbage, Vape will not work on such garabge until they fix BOTH HttpGet & file functions.')
+				error(res)
+			end
+			displayErrorPopup("Failed to connect to github : vape/"..scripturl.." : "..res)
+			error(res)
+		end
+		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
+		writefile("vape/"..scripturl, res)
+	end
+	return readfile("vape/"..scripturl)
 end
 
-GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Text = "Rise V4.0 (learning)"
-GuiLibrary["MainGui"].ScaledGui.ClickGui.MainWindow.TextLabel.Text = "Rise V4.0"
-GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Version.Text = "Rise V4.0"
-GuiLibrary["MainGui"].ScaledGui.ClickGui.Version.Position = UDim2.new(1, -175 - 20, 1, -25)
-infonotify("Rise 4.0", "Loaded successfully!", 5)
-
-risenotify("Rise 4.0", "Searching for anticheat..", 3)
-task.wait(4)
-risenotify("Rise 4.0", "No results for anticheat has been found.", 3)
-
-
-local AutoWin1 = COB("Blatant", {
-    Name = "RageAutoWin",
-    HoverText = "This feature is currently disabled, but it automaticially wins the match for you.",
-    Function = function(callback)
-        if callback then
-            pcall(function()
-                risenotify("Rise 4.0", "Searching for anticheat..", 5)
-            end)
-        else
-            pcall(function()
-                print("disabled autowin")
-            end)
-        end
-    end
-})
-
-local AutoWin1 = COB("Render", {
-    Name = "Notification",
-    HoverText = "Spams yourself with a ton of searching for anticheat notifications.",
-    Function = function(callback)
-        if callback then
-            pcall(function()
-                risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-                task.wait(0.5) risenotify("Rise 4.0", "Searching for anticheat..", 5)
-
-            end)
-        else
-            pcall(function()
-                print("disabled autowin")
-            end)
-        end
-    end
-})
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
-
-local bedNukerEnabled = false -- Initial state of bed nuker (disabled)
-
-local function autoDamageBedsFunction()
-    while bedNukerEnabled do
-        local playerPosition = LocalPlayer.Character and LocalPlayer.Character.PrimaryPart and LocalPlayer.Character.PrimaryPart.Position
-        if playerPosition then
-            local bedsFolder = workspace:WaitForChild("Map"):WaitForChild("Beds")
-            local woodPick = "Wooden Pickaxe"
-
-            local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("DamageBlock")
-
-            -- Function to find the nearest enemy bed
-            local function getNearestBed()
-                local nearestBed = nil
-                local shortestDistance = math.huge
-                local playerTeamColor = LocalPlayer.TeamColor
-
-                for _, bed in ipairs(bedsFolder:GetChildren()) do
-                    if bed:IsA("Model") and bed:FindFirstChild("Primary") and bed:FindFirstChild("Mattress") then
-                        local mattress = bed.Mattress
-                        if mattress.BrickColor == playerTeamColor then
-                            continue -- Skip if it's the player's own bed
-                        end
-
-                        local bedPosition = bed.Primary.Position
-                        local distance = (bedPosition - playerPosition).Magnitude
-
-                        if distance < shortestDistance then
-                            nearestBed = bed
-                            shortestDistance = distance
-                        end
-                    end
-                end
-
-                return nearestBed
-            end
-
-            -- Get the nearest bed and damage it
-            local nearestBed = getNearestBed()
-            if nearestBed then
-                local args = {
-                    [1] = nearestBed, -- Target the nearest bed
-                    [2] = woodPick -- Using the wooden pickaxe by default
-                }
-                remote:InvokeServer(unpack(args))
-            end
-        end
-        task.wait() -- Wait between each action to avoid server overload
-    end
+if not shared.VapeDeveloper then 
+	local commit = "main"
+	for i,v in pairs(game:HttpGet("https://github.com/7GrandDadPGN/VapeV4ForRoblox"):split("\n")) do 
+		if v:find("commit") and v:find("fragment") then 
+			local str = v:split("/")[5]
+			commit = str:sub(0, str:find('"') - 1)
+			break
+		end
+	end
+	if commit then
+		if isfolder("vape") then 
+			if ((not isfile("vape/commithash.txt")) or (readfile("vape/commithash.txt") ~= commit or commit == "main")) then
+				for i,v in pairs({"vape/Universal.lua", "vape/MainScript.lua", "vape/GuiLibrary.lua"}) do 
+					if isfile(v) and readfile(v):find("--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.") then
+						delfile(v)
+					end 
+				end
+				if isfolder("vape/CustomModules") then 
+					for i,v in pairs(listfiles("vape/CustomModules")) do 
+						if isfile(v) and readfile(v):find("--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.") then
+							delfile(v)
+						end 
+					end
+				end
+				if isfolder("vape/Libraries") then 
+					for i,v in pairs(listfiles("vape/Libraries")) do 
+						if isfile(v) and readfile(v):find("--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.") then
+							delfile(v)
+						end 
+					end
+				end
+				writefile("vape/commithash.txt", commit)
+			end
+		else
+			makefolder("vape")
+			writefile("vape/commithash.txt", commit)
+		end
+	else
+		displayErrorPopup("Failed to connect to github, please try using a VPN.")
+		error("Failed to connect to github, please try using a VPN.")
+	end
 end
 
--- Bed Nuker utility using the COB structure
-local BedNukerUtility = COB("Utility", {
-    Name = "BedNukerBWZ",
-    HoverText = "Breaks beds arround you automaticially.",
-    Function = function(callback)
-        if callback then
-            bedNukerEnabled = true -- Enable bed nuker
-            pcall(function()
-                infonotify("Rise 4.0", "Bed Nuker enabled", 2)
-                autoDamageBedsFunction() -- Start damaging beds
-            end)
-        else
-            bedNukerEnabled = false -- Disable bed nuker
-            pcall(function()
-                print("Bed Nuker Disabled")
-            end)
-        end
-    end
-})
+return loadstring(vapeGithubRequest("MainScript.lua"))()
