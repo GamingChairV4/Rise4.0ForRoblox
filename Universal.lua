@@ -1931,13 +1931,13 @@ run(function()
 	})
 	AutoClickerMode = AutoClicker.CreateDropdown({
 		Name = "Mode",
-		List = {"Tool", "Click", "RightClick"},
+		List = {"Tool", "Click", "RightClick", "Sigma"},
 		Function = function() end
 	})
 	AutoClickerCPS = AutoClicker.CreateTwoSlider({
 		Name = "CPS",
 		Min = 1,
-		Max = 20,
+		Max = 48,
 		Default = 8,
 		Default2 = 12
 	})
@@ -2039,8 +2039,8 @@ end)
 
 run(function()
 	local Fly = {Enabled = false}
-	local FlySpeed = {Value = 1}
-	local FlyVerticalSpeed = {Value = 1}
+	local FlySpeed = {Value = 24}
+	local FlyVerticalSpeed = {Value = 24}
 	local FlyTPOff = {Value = 10}
 	local FlyTPOn = {Value = 10}
 	local FlyCFrameVelocity = {Enabled = false}
@@ -4687,7 +4687,7 @@ run(function()
 		until not p or p.Parent ~= torso.Parent
 	end
 
-	local Cape = {Enabled = false}
+	local Cape = {Enabled = true}
 	local CapeBox = {Value = ""}
 	Cape = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
 		Name = "Cape",
@@ -4747,7 +4747,7 @@ run(function()
 end)
 
 run(function()
-	local ChinaHat = {Enabled = false}
+	local ChinaHat = {Enabled = true}
 	local ChinaHatColor = {Hue = 1, Sat=1, Value=0.33}
 	local chinahattrail
 	local chinahatattachment
@@ -5133,7 +5133,7 @@ run(function()
 										end
 									end)
 									if AutoReportNotify.Enabled then
-										riseNotif("AutoReport", "Reported "..plr.Name.." for "..reportreason..' ('..reportedmatch..')', 15)
+										riseNotif("AutoReport", "Reported a non-sigma "..plr.Name.." for "..reportreason..' ('..reportedmatch..')', 15)
 									end
 									alreadyreported[plr] = true
 								end
@@ -5154,64 +5154,6 @@ run(function()
 	AutoReportList = AutoReport.CreateTextList({
 		Name = "Report Words",
 		TempText = "phrase (to report)"
-	})
-end)
-
-run(function()
-	local targetstrafe = {Enabled = false}
-	local targetstraferange = {Value = 0}
-	local oldmove
-	local controlmodule
-	targetstrafe = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
-		Name = "TargetStrafe",
-		Function = function(callback)
-			if callback then
-				if not controlmodule then
-					local suc = pcall(function() controlmodule = require(lplr.PlayerScripts.PlayerModule).controls end)
-					if not suc then controlmodule = {} end
-				end
-				oldmove = controlmodule.moveFunction
-				controlmodule.moveFunction = function(Self, vec, facecam, ...)
-					if entityLibrary.isAlive then
-						local plr = EntityNearPosition(targetstraferange.Value, {
-							WallCheck = false,
-							AimPart = "RootPart"
-						})
-						if plr then
-							facecam = false
-							--code stolen from roblox since the way I tried to make it apparently sucks
-							local c, s
-							local plrCFrame = CFrame.lookAt(entityLibrary.character.HumanoidRootPart.Position, Vector3.new(plr.RootPart.Position.X, 0, plr.RootPart.Position.Z))
-							local _, _, _, R00, R01, R02, _, _, R12, _, _, R22 = plrCFrame:GetComponents()
-							if R12 < 1 and R12 > -1 then
-								c = R22
-								s = R02
-							else
-								c = R00
-								s = -R01*math.sign(R12)
-							end
-							local norm = math.sqrt(c*c + s*s)
-							local cameraRelativeMoveVector = controlmodule:GetMoveVector()
-							vec = Vector3.new(
-								(c*cameraRelativeMoveVector.X + s*cameraRelativeMoveVector.Z)/norm,
-								0,
-								(c*cameraRelativeMoveVector.Z - s*cameraRelativeMoveVector.X)/norm
-							)
-						end
-					end
-					return oldmove(Self, vec, facecam, ...)
-				end
-			else
-				controlmodule.moveFunction = oldmove
-			end
-		end
-	})
-	targetstraferange = targetstrafe.CreateSlider({
-		Name = "Range",
-		Function = function() end,
-		Min = 0,
-		Max = 100,
-		Default = 14
 	})
 end)
 
@@ -5298,7 +5240,7 @@ run(function()
 	end
 
 	AutoLeave = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
-		Name = "AutoLeave",
+		Name = "Staff Detector",
 		Function = function(callback)
 			if callback then
 				if AutoLeaveGroupId.Value == "" or AutoLeaveRank.Value == "" then
@@ -5352,38 +5294,6 @@ run(function()
 		Name = "Rank Id",
 		TempText = "1 (rank id)",
 		Function = function() end
-	})
-end)
-
-run(function()
-	GuiLibrary.ObjectsThatCanBeSaved.WorldWindow.Api.CreateOptionsButton({
-		Name = "AntiVoid",
-		Function = function(callback)
-			if callback then
-				local rayparams = RaycastParams.new()
-				rayparams.RespectCanCollide = true
-				local lastray
-				RunLoops:BindToHeartbeat("AntiVoid", function()
-					if entityLibrary.isAlive then
-						rayparams.FilterDescendantsInstances = {gameCamera, lplr.Character}
-						lastray = entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air and entityLibrary.character.HumanoidRootPart.CFrame or lastray
-						if (entityLibrary.character.HumanoidRootPart.Position.Y + (entityLibrary.character.HumanoidRootPart.Velocity.Y * 0.016)) <= (workspace.FallenPartsDestroyHeight + 5) then
-							local comp = {entityLibrary.character.HumanoidRootPart.CFrame:GetComponents()}
-							comp[2] = (workspace.FallenPartsDestroyHeight + 20)
-							if lastray then
-								comp[1] = lastray.Position.X
-								comp[2] = lastray.Position.Y + (entityLibrary.character.Humanoid.HipHeight + (entityLibrary.character.HumanoidRootPart.Size.Y / 2))
-								comp[3] = lastray.Position.Z
-							end
-							entityLibrary.character.HumanoidRootPart.CFrame = CFrame.new(unpack(comp))
-							entityLibrary.character.HumanoidRootPart.Velocity = Vector3.new(entityLibrary.character.HumanoidRootPart.Velocity.X, 0, entityLibrary.character.HumanoidRootPart.Velocity.Z)
-						end
-					end
-				end)
-			else
-				RunLoops:UnbindFromHeartbeat("AntiVoid")
-			end
-		end
 	})
 end)
 
@@ -5503,213 +5413,6 @@ run(function()
 		Min = 1,
 		Max = 20,
 		Double = 10
-	})
-end)
-
-run(function()
-	local GamingChair = {Enabled = false}
-	local GamingChairColor = {Value = 1}
-	local chair
-	local chairanim
-	local chairhighlight
-	local movingsound
-	local flyingsound
-	local wheelpositions = {
-		Vector3.new(-0.8, -0.6, -0.18),
-		Vector3.new(0.1, -0.6, -0.88),
-		Vector3.new(0, -0.6, 0.7)
-	}
-	local currenttween
-	GamingChair = GuiLibrary.ObjectsThatCanBeSaved.RenderWindow.Api.CreateOptionsButton({
-		Name = "GamingChair",
-		Function = function(callback)
-			if callback then
-				chair = Instance.new("MeshPart")
-				chair.Color = Color3.fromRGB(21, 21, 21)
-				chair.Size = Vector3.new(2.16, 3.6, 2.3) / Vector3.new(12.37, 20.636, 13.071)
-				chair.CanCollide = false
-				chair.MeshId = "rbxassetid://12972961089"
-				chair.Material = Enum.Material.SmoothPlastic
-				chair.Parent = workspace
-				movingsound = Instance.new("Sound")
-				movingsound.SoundId = downloadVapeAsset("vape/assets/ChairRolling.mp3")
-				movingsound.Volume = 0.4
-				movingsound.Looped = true
-				movingsound.Parent = workspace
-				flyingsound = Instance.new("Sound")
-				flyingsound.SoundId = downloadVapeAsset("vape/assets/ChairFlying.mp3")
-				flyingsound.Volume = 0.4
-				flyingsound.Looped = true
-				flyingsound.Parent = workspace
-				local chairweld = Instance.new("WeldConstraint")
-				chairweld.Part0 = chair
-				chairweld.Parent = chair
-				if entityLibrary.isAlive then
-					chair.CFrame = entityLibrary.character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(-90), 0)
-					chairweld.Part1 = entityLibrary.character.HumanoidRootPart
-				end
-				chairhighlight = Instance.new("Highlight")
-				chairhighlight.FillTransparency = 1
-				chairhighlight.OutlineColor = Color3.fromHSV(GamingChairColor.Hue, GamingChairColor.Sat, GamingChairColor.Value)
-				chairhighlight.DepthMode = Enum.HighlightDepthMode.Occluded
-				chairhighlight.OutlineTransparency = 0.2
-				chairhighlight.Parent = chair
-				local chairarms = Instance.new("MeshPart")
-				chairarms.Color = chair.Color
-				chairarms.Size = Vector3.new(1.39, 1.345, 2.75) / Vector3.new(97.13, 136.216, 234.031)
-				chairarms.CFrame = chair.CFrame * CFrame.new(-0.169, -1.129, -0.013)
-				chairarms.MeshId = "rbxassetid://12972673898"
-				chairarms.CanCollide = false
-				chairarms.Parent = chair
-				local chairarmsweld = Instance.new("WeldConstraint")
-				chairarmsweld.Part0 = chairarms
-				chairarmsweld.Part1 = chair
-				chairarmsweld.Parent = chair
-				local chairlegs = Instance.new("MeshPart")
-				chairlegs.Color = chair.Color
-				chairlegs.Name = "Legs"
-				chairlegs.Size = Vector3.new(1.8, 1.2, 1.8) / Vector3.new(10.432, 8.105, 9.488)
-				chairlegs.CFrame = chair.CFrame * CFrame.new(0.047, -2.324, 0)
-				chairlegs.MeshId = "rbxassetid://13003181606"
-				chairlegs.CanCollide = false
-				chairlegs.Parent = chair
-				local chairfan = Instance.new("MeshPart")
-				chairfan.Color = chair.Color
-				chairfan.Name = "Fan"
-				chairfan.Size = Vector3.zero
-				chairfan.CFrame = chair.CFrame * CFrame.new(0, -1.873, 0)
-				chairfan.MeshId = "rbxassetid://13004977292"
-				chairfan.CanCollide = false
-				chairfan.Parent = chair
-				local trails = {}
-				for i,v in pairs(wheelpositions) do
-					local attachment = Instance.new("Attachment")
-					attachment.Position = v
-					attachment.Parent = chairlegs
-					local attachment2 = Instance.new("Attachment")
-					attachment2.Position = v + Vector3.new(0, 0, 0.18)
-					attachment2.Parent = chairlegs
-					local trail = Instance.new("Trail")
-					trail.Texture = "http://www.roblox.com/asset/?id=13005168530"
-					trail.TextureMode = Enum.TextureMode.Static
-					trail.Transparency = NumberSequence.new(0.5)
-					trail.Color = ColorSequence.new(Color3.new(0.5, 0.5, 0.5))
-					trail.Attachment0 = attachment
-					trail.Attachment1 = attachment2
-					trail.Lifetime = 20
-					trail.MaxLength = 60
-					trail.MinLength = 0.1
-					trail.Parent = chairlegs
-					table.insert(trails, trail)
-				end
-				chairanim = {Stop = function() end}
-				local oldmoving = false
-				local oldflying = false
-				task.spawn(function()
-					repeat
-						task.wait()
-						if not GamingChair.Enabled then break end
-						if entityLibrary.isAlive and entityLibrary.character.Humanoid.Health > 0 then
-							if not chairanim.IsPlaying then
-								local temp2 = Instance.new("Animation")
-								temp2.AnimationId = entityLibrary.character.Humanoid.RigType == Enum.HumanoidRigType.R15 and "http://www.roblox.com/asset/?id=2506281703" or "http://www.roblox.com/asset/?id=178130996"
-								chairanim = entityLibrary.character.Humanoid:LoadAnimation(temp2)
-								chairanim.Priority = Enum.AnimationPriority.Movement
-								chairanim.Looped = true
-								chairanim:Play()
-							end
-							--welds didn't work for these idk why so poop code :troll:
-							chair.CFrame = entityLibrary.character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(-90), 0)
-							chairweld.Part1 = entityLibrary.character.HumanoidRootPart
-							chairlegs.Velocity = Vector3.zero
-							chairlegs.CFrame = chair.CFrame * CFrame.new(0.047, -2.324, 0)
-							chairfan.Velocity = Vector3.zero
-							chairfan.CFrame = chair.CFrame * CFrame.new(0.047, -1.873, 0) * CFrame.Angles(0, math.rad(tick() * 180 % 360), math.rad(180))
-							local moving = entityLibrary.character.Humanoid:GetState() == Enum.HumanoidStateType.Running and entityLibrary.character.Humanoid.MoveDirection ~= Vector3.zero
-							local flying = GuiLibrary.ObjectsThatCanBeSaved.FlyOptionsButton.Api.Enabled or GuiLibrary.ObjectsThatCanBeSaved.LongJumpOptionsButton and GuiLibrary.ObjectsThatCanBeSaved.LongJumpOptionsButton.Api.Enabled or GuiLibrary.ObjectsThatCanBeSaved.InfiniteFlyOptionsButton and GuiLibrary.ObjectsThatCanBeSaved.InfiniteFlyOptionsButton.Api.Enabled
-							if movingsound.TimePosition > 1.9 then
-								movingsound.TimePosition = 0.2
-							end
-							movingsound.PlaybackSpeed = (entityLibrary.character.HumanoidRootPart.Velocity * Vector3.new(1, 0, 1)).Magnitude / 16
-							for i,v in pairs(trails) do
-								v.Enabled = not flying and moving
-								v.Color = ColorSequence.new(movingsound.PlaybackSpeed > 1.5 and Color3.new(1, 0.5, 0) or Color3.new())
-							end
-							if moving ~= oldmoving then
-								if movingsound.IsPlaying then
-									if not moving then movingsound:Stop() end
-								else
-									if not flying and moving then movingsound:Play() end
-								end
-								oldmoving = moving
-							end
-							if flying ~= oldflying then
-								if flying then
-									if movingsound.IsPlaying then
-										movingsound:Stop()
-									end
-									if not flyingsound.IsPlaying then
-										flyingsound:Play()
-									end
-									if currenttween then currenttween:Cancel() end
-									tween = tweenService:Create(chairlegs, TweenInfo.new(0.15), {Size = Vector3.zero})
-									tween.Completed:Connect(function(state)
-										if state == Enum.PlaybackState.Completed then
-											chairfan.Transparency = 0
-											chairlegs.Transparency = 1
-											tween = tweenService:Create(chairfan, TweenInfo.new(0.15), {Size = Vector3.new(1.534, 0.328, 1.537) / Vector3.new(791.138, 168.824, 792.027)})
-											tween:Play()
-										end
-									end)
-									tween:Play()
-								else
-									if flyingsound.IsPlaying then
-										flyingsound:Stop()
-									end
-									if not movingsound.IsPlaying and moving then
-										movingsound:Play()
-									end
-									if currenttween then currenttween:Cancel() end
-									tween = tweenService:Create(chairfan, TweenInfo.new(0.15), {Size = Vector3.zero})
-									tween.Completed:Connect(function(state)
-										if state == Enum.PlaybackState.Completed then
-											chairfan.Transparency = 1
-											chairlegs.Transparency = 0
-											tween = tweenService:Create(chairlegs, TweenInfo.new(0.15), {Size = Vector3.new(1.8, 1.2, 1.8) / Vector3.new(10.432, 8.105, 9.488)})
-											tween:Play()
-										end
-									end)
-									tween:Play()
-								end
-								oldflying = flying
-							end
-						else
-							chair.Anchored = true
-							chairlegs.Anchored = true
-							chairfan.Anchored = true
-							repeat task.wait() until entityLibrary.isAlive and entityLibrary.character.Humanoid.Health > 0
-							chair.Anchored = false
-							chairlegs.Anchored = false
-							chairfan.Anchored = false
-							chairanim:Stop()
-						end
-					until not GamingChair.Enabled
-				end)
-			else
-				if chair then chair:Destroy() end
-				if chairanim then chairanim:Stop() end
-				if movingsound then movingsound:Destroy() end
-				if flyingsound then flyingsound:Destroy() end
-			end
-		end
-	})
-	GamingChairColor = GamingChair.CreateColorSlider({
-		Name = "Color",
-		Function = function(h, s, v)
-			if chairhighlight then
-				chairhighlight.OutlineColor = Color3.fromHSV(h, s, v)
-			end
-		end
 	})
 end)
 
@@ -5916,55 +5619,6 @@ run(function()
 end)
 
 run(function()
-	local Disabler = {Enabled = false}
-	local DisablerAntiKick = {Enabled = false}
-	local disablerhooked = false
-
-	local hookmethod = function(self)
-		if (not Disabler.Enabled) then return end
-		if type(self) == "userdata" and self == lplr then
-			return true
-		end
-	end
-
-
-	Disabler = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
-		Name = "ClientKickDisabler",
-		Function = function(callback)
-			if callback then
-				if not disablerhooked then
-					disablerhooked = true
-					local oldnamecall
-					oldnamecall = hookmetamethod(game, "__namecall", function(self, ...)
-						local method = getnamecallmethod()
-						if method ~= "Kick" and method ~= "kick" then return oldnamecall(self, ...) end
-						if not Disabler.Enabled then
-							return oldnamecall(self, ...)
-						end
-						if not hookmethod(self) then return oldnamecall(self, ...) end
-						return
-					end)
-					local antikick
-					antikick = hookfunction(lplr.Kick, function(self, ...)
-						if not Disabler.Enabled then return antikick(self, ...) end
-						if type(self) == "userdata" and self == lplr then
-							return
-						end
-						return antikick(self, ...)
-					end)
-				end
-			else
-				if restorefunction then
-					restorefunction(lplr.Kick)
-					restorefunction(getrawmetatable(game).__namecall)
-					disablerhooked = false
-				end
-			end
-		end
-	})
-end)
-
-run(function()
 	local FPS = {}
 	local FPSLabel
 	FPS = GuiLibrary.CreateLegitModule({
@@ -6112,99 +5766,6 @@ run(function()
 	createKeystroke(Enum.KeyCode.Space, UDim2.new(0, 0, 0, 83), UDim2.new(0, 25, 0, -10))
 end)
 
-
-
-run(function()
-    local Killaura = {Enabled = false}
-    local moose = game.Players.LocalPlayer:GetMouse()
-    
-    Killaura = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
-        Name = "Killaura",
-        HoverText = "the goat",
-        Function = function(callback)
-            if callback then
-                game:GetService("RunService").RenderStepped:Connect(function()
-                    local target, yourself
-                    for _,v in pairs(game.Players:GetPlayers()) do
-                        if v.Name == game.Players.LocalPlayer.Name then continue end
-                        if v.Character.Humanoid.Health < 0 then continue end
-                        if v then
-                            local chary = v.Character
-                            local Dist = v:DistanceFromCharacter(game.Players.LocalPlayer.Character.HumanoidRootPart.Position)
-                            if not chary or Dist > KillauraRange.Value or (yourself and Dist >= yourself) then
-                                continue
-                            end
-                            
-                            target = v
-                            yourself = Dist
-                        end
-                    end
-                    if target and target.Character.Humanoid.Health > 0 then    game:GetService("ReplicatedStorage").Remotes.ItemRemotes.SwordAttack:FireServer(target.Character.PrimaryPart, target.Character.Humanoid.MoveDirection + Vector3.new(0,0.5,0), game.Players.LocalPlayer.HotbarFolder["1"]:GetAttribute("ItemName"))
-                    end
-                end)
-            end
-        end
-    })
-	KillauraRange = Killaura.CreateSlider({
-		Name = 'Range',
-		Min = 30,
-		Max = 100,
-		Function = function(val) end,
-		Default = 30
-	})
-end)
-
-run(function()
-	local autoToxic = {Enabled = false}
-	local Kills = game.Players.LocalPlayer.leaderstats.Kills or game.Players.Leaderstats.Kills
-	autoToxic = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
-		Name = 'AutoToxic',
-		HoverText = 'Its toxic when you kill somebody',
-		Function = function(callback)
-			if callback then 
-				Kills:GetPropertyChangedSignal("Value"):Connect(function()
-					local Killsay
-					local math_random = math.random
-					local randomNumber = math_random(1, 7)
-			
-					if randomNumber == 1 then
-						Killsay = "rise 4.0 private"
-					end
-					if randomNumber == 2 then
-						Killsay = "Searching for anticheat.."
-					end
-					if randomNumber == 3 then
-						Killsay = "Result anticheat has not been found."
-					end
-			
-					if randomNumber == 4 then
-						Killsay = "/synz (rise 4)"
-					end
-			
-					if randomNumber == "5" then
-						Killsay = "work 4 rise | .gg/rise"
-					end
-
-					if randomNumber == "6" then
-						Killsay = "justsubtominiblox is <13"
-					end
-
-					if randomNumber == "7" then
-						Killsay = "gamemaster & gab has the worst ac ever!"
-					end
-			
-					local args = {
-						[1] = Killsay,
-						[2] = "All"
-					}
-					
-					game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(unpack(args))
-				end)
-			end
-		end
-	})
-end)
-
 run(function()
 	local SpeedModule = {Enabled = false}
 	SpeedModule = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
@@ -6221,8 +5782,8 @@ run(function()
 		})
 		HowMuch = SpeedModule.CreateSlider({
 			Name = 'SpeedValue',
-			Min = 0.1,
-			Max = 24,
+			Min = 1,
+			Max = 100,
 			Function = function(val) end,
 			default = 1
 		})
@@ -6232,6 +5793,7 @@ run(function()
 	local PlayerRotation = {Enabled = false}
 	PlayerRotation = GuiLibrary.ObjectsThatCanBeSaved.UtilityWindow.Api.CreateOptionsButton({
 		Name = 'PlayerRotation',
+		HoverText = 'I cum on cqrzy',
 		Function = function(callback)
 			if callback then
 				game.Players.LocalPlayer.Character.HumanoidRootPart.Orientation = Vector3.new(XValue.Value, YValue.Value, ZValue.Value)
