@@ -11,11 +11,11 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local tweenService = game:GetService("TweenService")
 local gameCamera = workspace.CurrentCamera
 local lplr = playersService.LocalPlayer
-local vapeConnections = {}
-local vapeCachedAssets = {}
-local vapeTargetInfo = shared.VapeTargetInfo
-local vapeInjected = true
-table.insert(vapeConnections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+local riseConnections = {}
+local riseCachedAssets = {}
+local riseTargetInfo = shared.riseTargetInfo
+local riseInjected = true
+table.insert(riseConnections, workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
 	gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA("Camera")
 end))
 local isfile = isfile or function(file)
@@ -31,8 +31,8 @@ local isnetworkowner = function(part)
 	end
 	return networkownerswitch <= tick()
 end
-local vapeAssetTable = {["vape/assets/VapeCape.png"] = "rbxassetid://13380453812", ["vape/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
-local getcustomasset = getsynasset or getcustomasset or function(location) return vapeAssetTable[location] or "" end
+local riseAssetTable = {["rise/assets/riseCape.png"] = "rbxassetid://13380453812", ["rise/assets/ArrowIndicator.png"] = "rbxassetid://13350766521"}
+local getcustomasset = getsynasset or getcustomasset or function(location) return riseAssetTable[location] or "" end
 local queueonteleport = syn and syn.queue_on_teleport or queue_on_teleport or function() end
 local synapsev3 = syn and syn.toast_notification and "V3" or ""
 local worldtoscreenpoint = function(pos)
@@ -50,18 +50,18 @@ local worldtoviewportpoint = function(pos)
 	return gameCamera.WorldToViewportPoint(gameCamera, pos)
 end
 
-local function vapeGithubRequest(scripturl)
-	if not isfile("vape/"..scripturl) then
-		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/GamingChairV4/Rise4.0ForRoblox/"..readfile("vape/commithash.txt").."/"..scripturl, true) end)
+local function riseGithubRequest(scripturl)
+	if not isfile("rise/"..scripturl) then
+		local suc, res = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/GamingChairV4/Rise4.0ForRoblox/"..readfile("rise/commithash.txt").."/"..scripturl, true) end)
 		assert(suc, res)
 		assert(res ~= "404: Not Found", res)
 		if scripturl:find(".lua") then res = "--This watermark is used to delete the file if its cached, remove it to make the file persist after commits.\n"..res end
-		writefile("vape/"..scripturl, res)
+		writefile("rise/"..scripturl, res)
 	end
-	return readfile("vape/"..scripturl)
+	return readfile("rise/"..scripturl)
 end
 
-local function downloadVapeAsset(path)
+local function downloadriseAsset(path)
 	if not isfile(path) then
 		task.spawn(function()
 			local textlabel = Instance.new("TextLabel")
@@ -77,15 +77,15 @@ local function downloadVapeAsset(path)
 			repeat task.wait() until isfile(path)
 			textlabel:Destroy()
 		end)
-		local suc, req = pcall(function() return vapeGithubRequest(path:gsub("vape/assets", "assets")) end)
+		local suc, req = pcall(function() return riseGithubRequest(path:gsub("rise/assets", "assets")) end)
         if suc and req then
 		    writefile(path, req)
         else
             return ""
         end
 	end
-	if not vapeCachedAssets[path] then vapeCachedAssets[path] = getcustomasset(path) end
-	return vapeCachedAssets[path]
+	if not riseCachedAssets[path] then riseCachedAssets[path] = getcustomasset(path) end
+	return riseCachedAssets[path]
 end
 
 local function warningNotification(title, text, delay)
@@ -146,14 +146,14 @@ local function getPlayerColor(plr)
 end
 
 local whitelist = {data = {WhitelistedUsers = {}}, hashes = {}, said = {}, alreadychecked = {}, customtags = {}, loaded = false, localprio = 0, hooked = false, get = function() return 0, true end}
-local entityLibrary = loadstring(vapeGithubRequest("Libraries/entityHandler.lua"))()
-shared.vapeentity = entityLibrary
+local entityLibrary = loadstring(riseGithubRequest("Libraries/entityHandler.lua"))()
+shared.riseentity = entityLibrary
 do
 	entityLibrary.selfDestruct()
-	table.insert(vapeConnections, GuiLibrary.ObjectsThatCanBeSaved.FriendsListTextCircleList.Api.FriendRefresh.Event:Connect(function()
+	table.insert(riseConnections, GuiLibrary.ObjectsThatCanBeSaved.FriendsListTextCircleList.Api.FriendRefresh.Event:Connect(function()
 		entityLibrary.fullEntityRefresh()
 	end))
-	table.insert(vapeConnections, GuiLibrary.ObjectsThatCanBeSaved["Teams by colorToggle"].Api.Refresh.Event:Connect(function()
+	table.insert(riseConnections, GuiLibrary.ObjectsThatCanBeSaved["Teams by colorToggle"].Api.Refresh.Event:Connect(function()
 		entityLibrary.fullEntityRefresh()
 	end))
 	local oldUpdateBehavior = entityLibrary.getUpdateConnections
@@ -199,7 +199,7 @@ do
 				end
 				entityLibrary.LocalPosition = closestpos
 			end
-		until not vapeInjected
+		until not riseInjected
 	end)
 end
 
@@ -324,7 +324,7 @@ local function AllNearPosition(distance, amount, checktab)
 	return returnedplayer
 end
 
-local sha = loadstring(vapeGithubRequest("Libraries/sha.lua"))()
+local sha = loadstring(riseGithubRequest("Libraries/sha.lua"))()
 run(function()
 	local olduninject
 	function whitelist:get(plr)
@@ -377,7 +377,7 @@ run(function()
 			self:hook()
 			if self.localprio == 0 then
 				olduninject = GuiLibrary.SelfDestruct
-				GuiLibrary.SelfDestruct = function() warningNotification('Vape', 'No escaping the private members :)', 10) end
+				GuiLibrary.SelfDestruct = function() warningNotification('rise', 'No escaping the private members :)', 10) end
 				if joined then task.wait(10) end
 				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 					local oldchannel = textChatService.ChatInputBarConfiguration.TargetTextChannel
@@ -396,8 +396,8 @@ run(function()
 		if plr == lplr and msg == 'helloimusinginhaler' then return true end
 		if self.localprio > 0 and self.said[plr.Name] == nil and msg == 'helloimusinginhaler' and plr ~= lplr then
 			self.said[plr.Name] = true
-			warningNotification('Vape', plr.Name..' is using vape!', 60)
-			self.customtags[plr.Name] = {{text = 'VAPE USER', color = Color3.new(1, 1, 0)}}
+			warningNotification('rise', plr.Name..' is using rise!', 60)
+			self.customtags[plr.Name] = {{text = 'rise USER', color = Color3.new(1, 1, 0)}}
 			local newent = entityLibrary.getEntity(plr)
 			if newent then entityLibrary.Events.EntityUpdated:Fire(newent) end
 			return true
@@ -464,7 +464,7 @@ run(function()
 					end
 					return oldchat(data, ...)
 				end)
-				table.insert(vapeConnections, {Disconnect = function() hookfunction(func, oldchat) end})
+				table.insert(riseConnections, {Disconnect = function() hookfunction(func, oldchat) end})
 			end)
 		end
 	end
@@ -476,7 +476,7 @@ run(function()
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
 			if exp then
 				if exp:WaitForChild('appLayout', 5) then
-					table.insert(vapeConnections, exp:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
+					table.insert(riseConnections, exp:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
 						local plr = playersService:GetPlayerByUserId(tonumber(obj.Name:split('-')[1]) or 0)
 						obj = obj:FindFirstChild('TextMessage', true)
 						if obj then
@@ -511,7 +511,7 @@ run(function()
 		if exp then
 			local bubblechat = exp:WaitForChild('bubbleChat', 5)
 			if bubblechat then
-				table.insert(vapeConnections, bubblechat.DescendantAdded:Connect(function(newbubble)
+				table.insert(riseConnections, bubblechat.DescendantAdded:Connect(function(newbubble)
 					if newbubble:IsA('TextLabel') and newbubble.Text:find('helloimusingrise') then
 						newbubble.Parent.Parent.Visible = false
 					end
@@ -532,7 +532,7 @@ run(function()
 		whitelist.loaded = true
 		if not first or whitelist.textdata ~= whitelist.olddata then
 			if not first then
-				whitelist.olddata = isfile('vape/profiles/whitelist.json') and readfile('vape/profiles/whitelist.json') or nil
+				whitelist.olddata = isfile('rise/profiles/whitelist.json') and readfile('rise/profiles/whitelist.json') or nil
 			end
 			whitelist.data = game:GetService('HttpService'):JSONDecode(whitelist.textdata)
 			whitelist.localprio = whitelist:get(lplr)
@@ -558,16 +558,16 @@ run(function()
 					local targets = whitelist.data.Announcement.targets == 'all' and {tostring(lplr.UserId)} or targets:split(',')
 					if table.find(targets, tostring(lplr.UserId)) then
 						local hint = Instance.new('Hint')
-						hint.Text = 'VAPE ANNOUNCEMENT: '..whitelist.data.Announcement.text
+						hint.Text = 'rise ANNOUNCEMENT: '..whitelist.data.Announcement.text
 						hint.Parent = workspace
 						game:GetService('Debris'):AddItem(hint, 20)
 					end
 				end
 				whitelist.olddata = whitelist.textdata
-				pcall(function() writefile('vape/profiles/whitelist.json', whitelist.textdata) end)
+				pcall(function() writefile('rise/profiles/whitelist.json', whitelist.textdata) end)
 			end
 
-			if whitelist.data.KillVape then
+			if whitelist.data.Killrise then
 				GuiLibrary.SelfDestruct()
 				return true
 			end
@@ -713,7 +713,7 @@ run(function()
 		end,
 		uninject = function()
 			if olduninject then
-				olduninject(vape)
+				olduninject(rise)
 			else
 				GuiLibrary.SelfDestruct()
 			end
@@ -1174,16 +1174,16 @@ run(function()
 		repeat
 			if whitelist:check(whitelist.loaded) then return end
 			task.wait(10)
-		until shared.VapeInjected == nil
+		until shared.riseInjected == nil
 	end)
-	table.insert(vapeConnections, {Disconnect = function()
+	table.insert(riseConnections, {Disconnect = function()
 		if whitelist.connection then whitelist.connection:Disconnect() end
 		table.clear(whitelist.commands)
 		table.clear(whitelist.data)
 		table.clear(whitelist)
 	end})
 end)
-shared.vapewhitelist = whitelist
+shared.risewhitelist = whitelist
 
 local RunLoops = {RenderStepTable = {}, StepTable = {}, HeartTable = {}}
 do
@@ -1228,9 +1228,9 @@ do
 end
 
 GuiLibrary.SelfDestructEvent.Event:Connect(function()
-	vapeInjected = false
+	riseInjected = false
 	entityLibrary.selfDestruct()
-	for i, v in pairs(vapeConnections) do
+	for i, v in pairs(riseConnections) do
 		if v.Disconnect then pcall(function() v:Disconnect() end) continue end
 		if v.disconnect then pcall(function() v:disconnect() end) continue end
 	end
@@ -1241,7 +1241,7 @@ run(function()
 	radargameCamera.FieldOfView = 45
 	local Radar = GuiLibrary.CreateCustomWindow({
 		Name = "Radar",
-		Icon = "vape/assets/RadarIcon1.png",
+		Icon = "rise/assets/RadarIcon1.png",
 		IconSize = 16
 	})
 	local RadarColor = Radar.CreateColorSlider({
@@ -1289,12 +1289,12 @@ run(function()
 	RadarMainFrame.Size = UDim2.new(0, 250, 0, 250)
 	RadarMainFrame.Parent = RadarFrame
 	local radartable = {}
-	table.insert(vapeConnections, Radar.GetCustomChildren().Parent:GetPropertyChangedSignal("Size"):Connect(function()
+	table.insert(riseConnections, Radar.GetCustomChildren().Parent:GetPropertyChangedSignal("Size"):Connect(function()
 		RadarFrame.Position = UDim2.new(0, 0, 0, (Radar.GetCustomChildren().Parent.Size.Y.Offset == 0 and 45 or 0))
 	end))
 	GuiLibrary.ObjectsThatCanBeSaved.GUIWindow.Api.CreateCustomToggle({
 		Name = "Radar",
-		Icon = "vape/assets/RadarIcon2.png",
+		Icon = "rise/assets/RadarIcon2.png",
 		Function = function(callback)
 			Radar.SetVisible(callback)
 			if callback then
@@ -1632,7 +1632,7 @@ run(function()
 				SilentAimMethodUsed = "Normal"..synapsev3
 				task.spawn(function()
 					repeat
-						vapeTargetInfo.Targets.SilentAim = SlientAimShotTick >= tick() and SilentAimShot or nil
+						riseTargetInfo.Targets.SilentAim = SlientAimShotTick >= tick() and SilentAimShot or nil
 						task.wait()
 					until not SilentAim.Enabled
 				end)
@@ -1646,7 +1646,7 @@ run(function()
 					SilentAimHooked = false
 				end
 				if SilentAimCircle then SilentAimCircle.Visible = false end
-				vapeTargetInfo.Targets.SilentAim = nil
+				riseTargetInfo.Targets.SilentAim = nil
 			end
 		end,
 		ExtraText = function()
@@ -2781,7 +2781,7 @@ run(function()
         arrowObject.AnchorPoint = Vector2.new(0.5, 0.5)
         arrowObject.Position = UDim2.new(0.5, 0, 0.5, 0)
         arrowObject.Visible = false
-        arrowObject.Image = downloadVapeAsset("vape/assets/ArrowIndicator.png")
+        arrowObject.Image = downloadriseAsset("rise/assets/ArrowIndicator.png")
 		arrowObject.ImageColor3 = getPlayerColor(plr.Player) or Color3.fromHSV(ArrowsColor.Hue, ArrowsColor.Sat, ArrowsColor.Value)
         arrowObject.Name = plr.Player.Name
         arrowObject.Parent = ArrowsFolder
@@ -4710,14 +4710,14 @@ run(function()
 				table.insert(Cape.Connections, lplr.CharacterAdded:Connect(function(char)
 					task.spawn(function()
 						pcall(function()
-							capeFunction(char, (successfulcustom or downloadVapeAsset("vape/assets/VapeCape.png")))
+							capeFunction(char, (successfulcustom or downloadriseAsset("rise/assets/riseCape.png")))
 						end)
 					end)
 				end))
 				if lplr.Character then
 					task.spawn(function()
 						pcall(function()
-							capeFunction(lplr.Character, (successfulcustom or downloadVapeAsset("vape/assets/VapeCape.png")))
+							capeFunction(lplr.Character, (successfulcustom or downloadriseAsset("rise/assets/riseCape.png")))
 						end)
 					end)
 				end
@@ -5047,7 +5047,7 @@ run(function()
 		adopted = "Bullying",
 		linlife = "Bullying",
 		commitnotalive = "Bullying",
-		vape = "Offsite Links",
+		rise = "Offsite Links",
 		futureclient = "Offsite Links",
 		download = "Offsite Links",
 		youtube = "Offsite Links",
@@ -5208,8 +5208,8 @@ run(function()
 					end
 					if AutoLeaveMode.Value == "UnInject" then
 						task.spawn(function()
-							if not shared.VapeFullyLoaded then
-								repeat task.wait() until shared.VapeFullyLoaded
+							if not shared.riseFullyLoaded then
+								repeat task.wait() until shared.riseFullyLoaded
 							end
 							GuiLibrary.SelfDestruct()
 						end)
