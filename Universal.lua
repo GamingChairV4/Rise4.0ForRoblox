@@ -5822,3 +5822,69 @@ run(function()
 		Default = 180
 	})
 end)
+
+-- InfiniteFly system allowing upward flight anytime and downward movement only when touching a part
+
+run(function()
+	local InfiniteFly = {Enabled = false}
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local camera = game.Workspace.CurrentCamera
+	local speed = 10 -- Default speed, adjustable with slider
+
+	InfiniteFly = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+		Name = 'InfiniteFly',
+		HoverText = 'Fly upwards anytime, return to Farlands when disabled',
+		Function = function(callback)
+			if callback then
+				-- Enable InfiniteFly
+				task.wait(2) -- 2-second delay before starting
+				InfiniteFly.Enabled = true
+				
+				-- Teleport player up and adjust camera position
+				humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, 100, 0) -- Teleport up
+				camera.CameraType = Enum.CameraType.Scriptable
+				camera.CFrame = CFrame.new(camera.CFrame.Position, Vector3.new(0, -1000000, 0)) -- Set camera 1m studs down
+				
+				-- Flight logic
+				repeat
+					task.wait()
+					
+					-- Check for input movement direction
+					local isTouching = #humanoidRootPart:GetTouchingParts() > 0
+					
+					-- Move up freely
+					if InfiniteFly.Enabled then
+						humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, speed / 10, 0)
+					end
+					
+					-- Allow moving down only if touching a part
+					if isTouching and InfiniteFly.Enabled == false then
+						humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -speed / 10, 0)
+					end
+					
+				until not InfiniteFly.Enabled
+
+			else
+				-- Disable InfiniteFly
+				InfiniteFly.Enabled = false
+				humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -1000000, 0) -- Teleport down to Farlands
+				
+				-- Reset camera to custom view in Farlands
+				camera.CameraType = Enum.CameraType.Custom
+			end
+		end
+	})
+
+	-- Speed Slider
+	SpeedSlider = InfiniteFly.CreateSlider({
+		Name = 'Speed',
+		Min = 1,
+		Max = 100,
+		Function = function(val)
+			speed = val -- Adjust speed based on slider value
+		end,
+		Default = 10
+	})
+end)
