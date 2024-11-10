@@ -5823,68 +5823,275 @@ run(function()
 	})
 end)
 
--- InfiniteFly system allowing upward flight anytime and downward movement only when touching a part
-
-run(function()
-	local InfiniteFly = {Enabled = false}
-	local player = game.Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = game.Workspace.CurrentCamera
-	local speed = 10 -- Default speed, adjustable with slider
-
-	InfiniteFly = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
-		Name = 'InfiniteFly',
-		HoverText = 'Fly upwards anytime, return to Farlands when disabled',
-		Function = function(callback)
+runcode(function()
+	local oldenable
+	local olddisable
+	local blockplacetable = {}
+	local blockplaceenabled = false
+	local autoclickercps = {["GetRandomValue"] = function() return 1 end}
+	local autoclicker = {["Enabled"] = false}
+	local autoclickertick = tick()
+	local autoclickerautoblock = {["Enabled"] = false}
+	local autoclickerblocks = {["Enabled"] = false}
+	local autoclickermousedown = false
+	local autoclickerconnection1
+	local autoclickerconnection2
+	local firstclick = false
+	autoclicker = GuiLibrary["ObjectsThatCanBeSaved"]["CombatWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "AutoClicker",
+		["Function"] = function(callback)
 			if callback then
-				-- Enable InfiniteFly
-				task.wait(2) -- 2-second delay before starting
-				InfiniteFly.Enabled = true
-				
-				-- Teleport player up and adjust camera position
-				humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, 100, 0) -- Teleport up
-				camera.CameraType = Enum.CameraType.Scriptable
-				camera.CFrame = CFrame.new(camera.CFrame.Position, Vector3.new(0, -1000000, 0)) -- Set camera 1m studs down
-				
-				-- Flight logic
-				repeat
-					task.wait()
-					
-					-- Check for input movement direction
-					local isTouching = #humanoidRootPart:GetTouchingParts() > 0
-					
-					-- Move up freely
-					if InfiniteFly.Enabled then
-						humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, speed / 10, 0)
+				autoclickerconnection1 = uis.InputBegan:connect(function(input, gameProcessed)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						autoclickermousedown = true
+						firstclick = true
 					end
-					
-					-- Allow moving down only if touching a part
-					if isTouching and InfiniteFly.Enabled == false then
-						humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -speed / 10, 0)
+				end)
+				autoclickerconnection2 = uis.InputEnded:connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						autoclickermousedown = false
 					end
-					
-				until not InfiniteFly.Enabled
-
+				end)
+				BindToRenderStep("AutoClicker", 1, function() 
+			
+					if isAlive() and autoclickermousedown and autoclickertick <= tick() and GuiLibrary["MainGui"].ScaledGui.ClickGui.Visible == false then
+						autoclickertick = tick() + (1 / autoclickercps["GetRandomValue"]())
+						if skywars["HotbarController"]:getHeldItemInfo() and skywars["HotbarController"]:getHeldItemInfo().Melee then
+							skywars["MeleeController"]:strike({
+								UserInputType = Enum.UserInputType.MouseButton1
+							})
+						end
+					end
+				end)
 			else
-				-- Disable InfiniteFly
-				InfiniteFly.Enabled = false
-				humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, -1000000, 0) -- Teleport down to Farlands
-				
-				-- Reset camera to custom view in Farlands
-				camera.CameraType = Enum.CameraType.Custom
+				oldenable = nil
+				olddisable = nil
+				if autoclickerconnection1 then
+					autoclickerconnection1:Disconnect()
+				end
+				if autoclickerconnection2 then
+					autoclickerconnection2:Disconnect()
+				end
+				UnbindFromRenderStep("AutoClicker")
+			end
+		end,
+		["HoverText"] = "Hold attack button to automatically click"
+	})
+	autoclickercps = autoclicker.CreateTwoSlider({
+		["Name"] = "CPS",
+		["Min"] = 1,
+		["Max"] = 20,
+		["Function"] = function(val) end,
+		["Default"] = 8,
+		["Default2"] = 12
+	})
+end)
+
+local killauranear
+local Killaura = {["Enabled"] = false}
+GuiLibrary["RemoveObject"]("SpeedOptionsButton")
+local Scaffold = {["Enabled"] = false}
+runcode(function()
+	local speedval = {["Value"] = 1}
+	local speedjump = {["Enabled"] = false}
+	local speedjumpheight = {["Value"] = 20}
+	local speedjumpalways = {["Enabled"] = false}
+	local bodyvelo
+	speed = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "Speed",
+		["Function"] = function(callback)
+			if callback then
+				BindToStepped("Speed", 1, function(time, delta)
+					if isAlive() and (GuiLibrary["ObjectsThatCanBeSaved"]["Lobby CheckToggle"]["Api"]["Enabled"] == false or matchState ~= 0) then
+						local jumpcheck = speedjump["Enabled"] and killauranear and Killaura["Enabled"] and (not Scaffold["Enabled"])
+						if (bodyvelo == nil or bodyvelo ~= nil and bodyvelo.Parent ~= lplr.Character.HumanoidRootPart) then
+							bodyvelo = Instance.new("BodyVelocity")
+							bodyvelo.Parent = lplr.Character.HumanoidRootPart
+							bodyvelo.MaxForce = Vector3.new(100000, 0, 100000)
+						else
+							bodyvelo.MaxForce = Vector3.new(100000, 0, 100000)
+							bodyvelo.Velocity = lplr.Character.Humanoid.MoveDirection * speedval["Value"]
+						end
+						if (speedjumpalways["Enabled"] and (not Scaffold["Enabled"]) or jumpcheck) then
+							if (lplr.Character.Humanoid.FloorMaterial ~= Enum.Material.Air) and lplr.Character.Humanoid.MoveDirection ~= Vector3.new(0, 0, 0) then
+								lplr.Character.HumanoidRootPart.Velocity = Vector3.new(lplr.Character.HumanoidRootPart.Velocity.X, speedjumpheight["Value"], lplr.Character.HumanoidRootPart.Velocity.Z)
+							end
+						end
+					end
+				end)
+			else
+				if bodyvelo then
+					bodyvelo:Remove()
+				end
+				UnbindFromStepped("Speed")
+			end
+		end, 
+		["HoverText"] = "Increases your movement."
+	})
+	speedval = speed.CreateSlider({
+		["Name"] = "Speed",
+		["Min"] = 1,
+		["Max"] = 150,
+		["Function"] = function(val) end,
+		["Default"] = 150
+	})
+	speedjumpheight = speed.CreateSlider({
+		["Name"] = "Jump Height",
+		["Min"] = 0,
+		["Max"] = 30,
+		["Default"] = 25,
+		["Function"] = function() end
+	})
+	speedjump = speed.CreateToggle({
+		["Name"] = "AutoJump", 
+		["Function"] = function(callback) 
+			if speedjumpalways["Object"] then
+				speedjump["Object"].ToggleArrow.Visible = callback
+				speedjumpalways["Object"].Visible = callback
+			end
+		end,
+		["Default"] = true
+	})
+	speedjumpalways = speed.CreateToggle({
+		["Name"] = "Always Jump",
+		["Function"] = function() end
+	})
+	speedjumpalways["Object"].BackgroundTransparency = 0
+	speedjumpalways["Object"].BorderSizePixel = 0
+	speedjumpalways["Object"].BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	speedjumpalways["Object"].Visible = speedjump["Enabled"]
+end)
+
+GuiLibrary["RemoveObject"]("KillauraOptionsButton")
+GuiLibrary["RemoveObject"]("HitBoxesOptionsButton")
+runcode(function()
+	local killaurabox = Instance.new("BoxHandleAdornment")
+    killaurabox.Transparency = 0.5
+    killaurabox.Color3 = Color3.new(1, 0, 0)
+    killaurabox.Adornee = nil
+    killaurabox.AlwaysOnTop = true
+	killaurabox.Size = Vector3.new(3, 6, 3)
+    killaurabox.ZIndex = 11
+    killaurabox.Parent = GuiLibrary["MainGui"]
+	local killauratargetframe = {["Players"] = {["Enabled"] = false}}
+    local killauramethod = {["Value"] = "Normal"}
+	local killauraothermethod = {["Value"] = "Normal"}
+    local killauraanimmethod = {["Value"] = "Normal"}
+    local killauraaps = {["GetRandomValue"] = function() return 1 end}
+    local killaurarange = {["Value"] = 14}
+    local killauraangle = {["Value"] = 360}
+    local killauratargets = {["Value"] = 10}
+    local killauramouse = {["Enabled"] = false}
+    local killauraautoblock = {["Enabled"] = false}
+    local killauragui = {["Enabled"] = false}
+    local killauratarget = {["Enabled"] = false}
+    local killaurasound = {["Enabled"] = false}
+    local killauraswing = {["Enabled"] = false}
+    local killaurahandcheck = {["Enabled"] = false}
+    local killaurabaguette = {["Enabled"] = false}
+    local killauraanimation = {["Enabled"] = false}
+	local killauradelay = tick()
+	Killaura = GuiLibrary["ObjectsThatCanBeSaved"]["BlatantWindow"]["Api"].CreateOptionsButton({
+		["Name"] = "Killaura",
+		["Function"] = function(callback)
+			if callback then
+				BindToStepped("Killaura", 1, function()
+					local plrs = GetAllNearestHumanoidToPosition(killauratargetframe["Players"]["Enabled"], killaurarange["Value"] + 0.5, killauratargets["Value"])
+					local handcheck = (killaurahandcheck["Enabled"] and skywars["HotbarController"]:getHeldItemInfo() and skywars["HotbarController"]:getHeldItemInfo().Melee or (not killaurahandcheck["Enabled"]))
+					targetinfo.Targets.Killaura = nil
+					for i,plr in pairs(plrs) do
+						if handcheck then
+							targetinfo.Targets.Killaura = {
+								Player = plr,
+								Humanoid = {
+									Health = (skywars["HealthController"]:getHealth(plr) or 100),
+									MaxHealth = 100
+								}
+							}
+						end
+					end
+					if killauratarget["Enabled"] and #plrs > 0 and handcheck then
+						killaurabox.Adornee = (killauratarget["Enabled"] and plrs[#plrs].Character or nil)
+					else
+						killaurabox.Adornee = nil
+					end
+					if killauradelay <= tick() and (killauramouse["Enabled"] and uis:IsMouseButtonPressed(0) or (not killauramouse["Enabled"])) and handcheck then
+						local sword = getSword()
+						if (not killauraswing["Enabled"]) and #plrs > 0 and handcheck then
+							skywars["MeleeController"]:playAnimation(sword)
+						end
+						local olditem, olditemname = getHeldItem()
+						killauranear = #plrs > 0
+						if sword then
+							for i,plr in pairs(plrs) do
+								equipItem(sword.Name)
+								skywars["EventHandler"][skywars["Events"].MeleeController.strikeDesktop[1]]:fire(plr)
+								equipItem(olditemname)
+							end
+						end
+						killauradelay = tick() + 0.3
+					end
+				end)
+			else
+				UnbindFromStepped("Killaura")
+				targetinfo.Targets.Killaura = nil
 			end
 		end
 	})
-
-	-- Speed Slider
-	SpeedSlider = InfiniteFly.CreateSlider({
-		Name = 'Speed',
-		Min = 1,
-		Max = 100,
-		Function = function(val)
-			speed = val -- Adjust speed based on slider value
-		end,
-		Default = 10
-	})
+	killauratargetframe = Killaura.CreateTargetWindow({})
+    killauraaps = Killaura.CreateTwoSlider({
+        ["Name"] = "Attacks per Second",
+        ["Min"] = 1,
+        ["Max"] = 10,
+        ["Function"] = function(val) end, 
+        ["Default"] = 8,
+        ["Default2"] = 10
+    })
+    killaurarange = Killaura.CreateSlider({
+        ["Name"] = "Attack range",
+        ["Min"] = 1,
+        ["Max"] = 13,
+        ["Function"] = function(val) end, 
+        ["Default"] = 13
+    })
+    killauraangle = Killaura.CreateSlider({
+        ["Name"] = "Max angle",
+        ["Min"] = 1,
+        ["Max"] = 360,
+        ["Function"] = function(val) end,
+        ["Default"] = 360
+    })
+    killauratargets = Killaura.CreateSlider({
+        ["Name"] = "Max targets",
+        ["Min"] = 1,
+        ["Max"] = 10,
+        ["Function"] = function(val) end,
+        ["Default"] = 10
+    })
+	killauramouse = Killaura.CreateToggle({
+        ["Name"] = "Require mouse down",
+        ["Function"] = function() end,
+		["HoverText"] = "Only attacks when left click is held.",
+        ["Default"] = false
+    })
+	killauragui = Killaura.CreateToggle({
+        ["Name"] = "GUI Check",
+        ["Function"] = function() end,
+		["HoverText"] = "Attacks when you are not in a GUI."
+    })
+	killauratarget = Killaura.CreateToggle({
+        ["Name"] = "Show target",
+        ["Function"] = function() end,
+		["HoverText"] = "Shows a red box over the opponent."
+    })
+	killauraswing = Killaura.CreateToggle({
+        ["Name"] = "No Swing",
+        ["Function"] = function() end,
+		["HoverText"] = "Removes the swinging animation."
+    })
+    killaurahandcheck = Killaura.CreateToggle({
+        ["Name"] = "Limit to items",
+        ["Function"] = function() end,
+		["HoverText"] = "Only attacks when your sword is held."
+    })
 end)
