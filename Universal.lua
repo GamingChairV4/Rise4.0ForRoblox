@@ -5823,7 +5823,7 @@ run(function()
 	})
 end)
 
-runcode(function()
+run(function()
 	local oldenable
 	local olddisable
 	local blockplacetable = {}
@@ -5891,7 +5891,7 @@ local killauranear
 local Killaura = {["Enabled"] = false}
 GuiLibrary["RemoveObject"]("SpeedOptionsButton")
 local Scaffold = {["Enabled"] = false}
-runcode(function()
+run(function()
 	local speedval = {["Value"] = 1}
 	local speedjump = {["Enabled"] = false}
 	local speedjumpheight = {["Value"] = 20}
@@ -5964,7 +5964,7 @@ end)
 
 GuiLibrary["RemoveObject"]("KillauraOptionsButton")
 GuiLibrary["RemoveObject"]("HitBoxesOptionsButton")
-runcode(function()
+run(function()
 	local killaurabox = Instance.new("BoxHandleAdornment")
     killaurabox.Transparency = 0.5
     killaurabox.Color3 = Color3.new(1, 0, 0)
