@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/GamingChairV4/Rise4.0ForRoblox/main/NewMainScript.lua", true))()
