@@ -345,6 +345,28 @@ GUI.CreateButton({
 	Icon = "vape/assets/WorldIcon.png",
 	IconSize = 16
 })
+GUI.CreateDivider("Rise")
+GUI.CreateButton({
+	Name = "Rise Vape",
+	Function = function(callback) World.SetVisible(callback) end,
+	Icon = "vape/assets/WorldIcon.png",
+	IconSize = 16
+})
+GUI.CreateDivider("Developer")
+GUI.CreateButton({
+	Name = "Developer Modifications",
+	Function = function(callback) World.SetVisible(callback) end,
+	Icon = "vape/assets/WorldIcon.png",
+	IconSize = 16
+})
+GUI.CreateDivider("Custom Vape")
+GUI.CreateButton({
+	Name = "Session Overlay",
+	Function = function(callback) World.SetVisible(callback) end,
+	Icon = "vape/assets/WorldIcon.png",
+	IconSize = 16
+})
+						
 GUI.CreateDivider("MISC")
 GUI.CreateButton({
 	Name = "Friends",
